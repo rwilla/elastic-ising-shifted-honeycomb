@@ -7,7 +7,7 @@
 #include <ctime>
 #include <random>
 #include <getopt.h>
-#include "lattice.cpp"
+#include "lattice.hpp"
 
 
 using namespace std;
@@ -347,7 +347,7 @@ void initialization(lattice::NearestNeighbors& nn, SystemState& s)
         nn.AB5[i] = index((cx(i) + xysize - 1) % xysize, cy(i), (cz(i) + 1) % oosize);
         nn.AB6[i] = index((cx(i) + xysize - 1 + cy(i) % 2) % xysize, (cy(i) + xysize - 1) % xysize, (cz(i) + 1) % oosize);
 
-		nn.AA1[i] = index(cx(i), cy(i), (cz(i) + oosize - 1) % oosize);
+        nn.AA1[i] = index(cx(i), cy(i), (cz(i) + oosize - 1) % oosize);
         nn.AA2[i] = index(cx(i), cy(i), (cz(i) + 1) % oosize);
         
         nn.BA1[i] = index((cx(i) + cy(i) % 2) % xysize, (cy(i) + 1) % xysize, (cz(i) + oosize - 1) % oosize);
@@ -357,7 +357,7 @@ void initialization(lattice::NearestNeighbors& nn, SystemState& s)
         nn.BA5[i] = index(cx(i), cy(i), cz(i));
         nn.BA6[i] = index((cx(i) + 1) % xysize, cy(i), cz(i));
 
-		nn.BB1[i] = index(cx(i), cy(i), (cz(i) + oosize - 1) % oosize);
+        nn.BB1[i] = index(cx(i), cy(i), (cz(i) + oosize - 1) % oosize);
         nn.BB2[i] = index(cx(i), cy(i), (cz(i) + 1) % oosize);
 
         nn.sweeporder[i] = i;
