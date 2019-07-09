@@ -7,6 +7,8 @@
 #include <ctime>
 #include <random>
 #include <getopt.h>
+#include "lattice.cpp"
+
 
 using namespace std;
 
@@ -28,46 +30,35 @@ double Jab = 1.0;							// oo-plane ferromagnetic coupling (antiferromagnetic if
 double eps = 1000.0;						// in-plane anisotropy
 double epsover2 = eps / 2.0;				// in-plane anisotropy
 
+struct SystemState {
+        SystemState(int N);
 
-double E = 0.0;								// Energy per spin
+        double E = 0.0;								// Energy per spin
 
-double MA = 0.0;							// Magnetization of sublattice A
-double MB = 0.0;							// Magnetization of sublattice B
+        double MA = 0.0;							// Magnetization of sublattice A
+        double MB = 0.0;							// Magnetization of sublattice B
 
-double sMA = 0.0;							// Staggered Magnetization A
-double sMB = 0.0;							// Staggered Magnetization B
+        double sMA = 0.0;							// Staggered Magnetization A
+        double sMB = 0.0;							// Staggered Magnetization B
 
-double Lnem = 0.0;							// nematic order MA * MB
-double Ldel = 0.0;							// DA - DB
+        double Lnem = 0.0;							// nematic order MA * MB
+        double Ldel = 0.0;							// DA - DB
 
-//double Cfunc [(int) xysize / 2];			// Correlation function <S(0)S(r)>
+        //double Cfunc [(int) xysize / 2];			// Correlation function <S(0)S(r)>
 
-double SA_state[N];							// Spin state S in sublattice A
-double SB_state[N];							// Spin state S in sublattice B
-double DA_state[N];							// Distortion state in sublattice A
-double DB_state[N];							// Distortion state in sublattice B
+        std::vector<int> SA;							// Spin state S in sublattice A
+        std::vector<int> SB;							// Spin state S in sublattice B
+        std::vector<int> DA;							// Distortion state in sublattice A
+        std::vector<int> DB;							// Distortion state in sublattice B
+};
 
-int nnAB1[N];							// nearest neighbor 1 to a spin A belonging to sublattice B in layer below
-int nnAB2[N];							// nearest neighbor 2 to a spin A belonging to sublattice B in layer below
-int nnAB3[N];							// nearest neighbor 3 to a spin A belonging to sublattice B in layer below
-int nnAB4[N];							// nearest neighbor 1 to a spin A belonging to sublattice B in layer above
-int nnAB5[N];							// nearest neighbor 2 to a spin A belonging to sublattice B in layer above
-int nnAB6[N];							// nearest neighbor 3 to a spin A belonging to sublattice B in layer above
+SystemState::SystemState(int N){
+        this->SA = std::vector<int>(N);
+        this->SB = std::vector<int>(N);
+        this->DA = std::vector<int>(N);
+        this->DB = std::vector<int>(N);
+}
 
-int nnAA1[N];								// nearest neighbor to a spin A spin belonging to sublattice A below
-int nnAA2[N];								// nearest neighbor to a spin A spin belonging to sublattice A above
-
-int nnBA1[N];							// nearest neighbor 1 to a spin B belonging to sublattice A in layer below
-int nnBA2[N];							// nearest neighbor 2 to a spin B belonging to sublattice A in layer below
-int nnBA3[N];							// nearest neighbor 3 to a spin B belonging to sublattice A in layer below
-int nnBA4[N];							// nearest neighbor 1 to a spin B belonging to sublattice A in layer above
-int nnBA5[N];							// nearest neighbor 2 to a spin B belonging to sublattice A in layer above
-int nnBA6[N];							// nearest neighbor 3 to a spin B belonging to sublattice A in layer above
-
-int nnBB1[N];								// nearest neighbor to a spin B spin belonging to sublattice B below
-int nnBB2[N];								// nearest neighbor to a spin B spin belonging to sublattice B above
-
-int sweeporder[N];							// order in which spins are visited
 
 double displacement_amplitude = .25;		// maximal displacement amplitude
 double acceptance_rate = 1.0;				// acceptance rate of the finished pass
@@ -195,53 +186,53 @@ double hamiltonian_onsite(double S, double D, int spin_index)
 
 
 //Nearest neighbor interaction for a spin on sublattice A
-double hamiltonian_nnA(double S, double D, int spin_index)
+double hamiltonian_nnA(double S, double D, int spin_index, const lattice::NearestNeighbors& nn, SystemState& s)
 {
     double e = 0.0;
         
     double nSB;
     double nDB;
             
-    nSB = SB_state[nnAB1[spin_index]];
-    nDB = DB_state[nnAB1[spin_index]];
+    nSB = s.SB[nn.AB1[spin_index]];
+    nDB = s.DB[nn.AB1[spin_index]];
     
     e += - Jab * (1.0 + D - nDB) * (S * nSB);
     
-    nSB = SB_state[nnAB2[spin_index]];
-    nDB = DB_state[nnAB2[spin_index]];
+    nSB = s.SB[nn.AB2[spin_index]];
+    nDB = s.DB[nn.AB2[spin_index]];
     
     e += - Jab * (1.0 + D - nDB) * (S * nSB);
     
-    nSB = SB_state[nnAB3[spin_index]];
-    nDB = DB_state[nnAB3[spin_index]];
+    nSB = s.SB[nn.AB3[spin_index]];
+    nDB = s.DB[nn.AB3[spin_index]];
     
     e += - Jab * (1.0 + D - nDB) * (S * nSB);
     
-    nSB = SB_state[nnAB4[spin_index]];
-    nDB = DB_state[nnAB4[spin_index]];
+    nSB = s.SB[nn.AB4[spin_index]];
+    nDB = s.DB[nn.AB4[spin_index]];
     
     e += - Jab * (1.0 - D + nDB) * (S * nSB);
     
-    nSB = SB_state[nnAB5[spin_index]];
-    nDB = DB_state[nnAB5[spin_index]];
+    nSB = s.SB[nn.AB5[spin_index]];
+    nDB = s.DB[nn.AB5[spin_index]];
     
     e += - Jab * (1.0 - D + nDB) * (S * nSB);
     
-    nSB = SB_state[nnAB6[spin_index]];
-    nDB = DB_state[nnAB6[spin_index]];
+    nSB = s.SB[nn.AB6[spin_index]];
+    nDB = s.DB[nn.AB6[spin_index]];
     
     e += - Jab * (1.0 - D + nDB) * (S * nSB);
     
     double nSA;
     double nDA;
 
-    nSA = SA_state[nnAA1[spin_index]];
-    nDA = DA_state[nnAA1[spin_index]];
+    nSA = s.SA[nn.AA1[spin_index]];
+    nDA = s.DA[nn.AA1[spin_index]];
     
     e += - Jcc * (1.0 + D - nDA) * (S * nSA);
     
-    nSA = SA_state[nnAA2[spin_index]];
-    nDA = DA_state[nnAA2[spin_index]];
+    nSA = s.SA[nn.AA2[spin_index]];
+    nDA = s.DA[nn.AA2[spin_index]];
     
     e += - Jcc * (1.0 - D + nDA) * (S * nSA);
     
@@ -250,53 +241,53 @@ double hamiltonian_nnA(double S, double D, int spin_index)
 
 
 //Nearest neighbor interaction for a spin on sublattice B
-double hamiltonian_nnB(double S, double D, int spin_index)
+double hamiltonian_nnB(double S, double D, int spin_index, const lattice::NearestNeighbors& nn, SystemState& s)
 {
     double e = 0.0;
         
     double nSA;
     double nDA;
             
-    nSA = SA_state[nnBA1[spin_index]];
-    nDA = DA_state[nnBA1[spin_index]];
+    nSA = s.SA[nn.BA1[spin_index]];
+    nDA = s.DA[nn.BA1[spin_index]];
     
     e += - Jab * (1.0 + D - nDA) * (S * nSA);
     
-    nSA = SA_state[nnBA2[spin_index]];
-    nDA = DA_state[nnBA2[spin_index]];
+    nSA = s.SA[nn.BA2[spin_index]];
+    nDA = s.DA[nn.BA2[spin_index]];
     
     e += - Jab * (1.0 + D - nDA) * (S * nSA);
     
-    nSA = SA_state[nnBA3[spin_index]];
-    nDA = DA_state[nnBA3[spin_index]];
+    nSA = s.SA[nn.BA3[spin_index]];
+    nDA = s.DA[nn.BA3[spin_index]];
     
     e += - Jab * (1.0 + D - nDA) * (S * nSA);
     
-    nSA = SA_state[nnBA4[spin_index]];
-    nDA = DA_state[nnBA4[spin_index]];
+    nSA = s.SA[nn.BA4[spin_index]];
+    nDA = s.DA[nn.BA4[spin_index]];
     
     e += - Jab * (1.0 - D + nDA) * (S * nSA);
     
-    nSA = SA_state[nnBA5[spin_index]];
-    nDA = DA_state[nnBA5[spin_index]];
+    nSA = s.SA[nn.BA5[spin_index]];
+    nDA = s.DA[nn.BA5[spin_index]];
     
     e += - Jab * (1.0 - D + nDA) * (S * nSA);
     
-    nSA = SA_state[nnBA6[spin_index]];
-    nDA = DA_state[nnBA6[spin_index]];
+    nSA = s.SA[nn.BA6[spin_index]];
+    nDA = s.DA[nn.BA6[spin_index]];
     
     e += - Jab * (1.0 - D + nDA) * (S * nSA);
     
     double nSB;
     double nDB;
 
-    nSB = SB_state[nnBB1[spin_index]];
-    nDB = DB_state[nnBB1[spin_index]];
+    nSB = s.SB[nn.BB1[spin_index]];
+    nDB = s.DB[nn.BB1[spin_index]];
     
     e += - Jcc * (1.0 + D - nDB) * (S * nSB);
     
-    nSB = SB_state[nnBB2[spin_index]];
-    nDB = DB_state[nnBB2[spin_index]];
+    nSB = s.SB[nn.BB2[spin_index]];
+    nDB = s.DB[nn.BB2[spin_index]];
     
     e += - Jcc * (1.0 - D + nDB) * (S * nSB);
     
@@ -305,28 +296,28 @@ double hamiltonian_nnB(double S, double D, int spin_index)
 
 
 //Full hamiltonian for a spin on sublattice A
-double hamiltonianA(double S, double D, int spin_index)
+double hamiltonianA(double S, double D, int spin_index, const lattice::NearestNeighbors& nn, SystemState& s)
 {
     double e = 0.0;
     e += hamiltonian_onsite(S, D, spin_index);
-    e += hamiltonian_nnA(S, D, spin_index);
+    e += hamiltonian_nnA(S, D, spin_index, nn, s);
     
     return e;
 }
 
 //Full hamiltonian for a spin on sublattice B
-double hamiltonianB(double S, double D, int spin_index)
+double hamiltonianB(double S, double D, int spin_index, const lattice::NearestNeighbors& nn, SystemState& s)
 {
     double e = 0.0;
     e += hamiltonian_onsite(S, D, spin_index);
-    e += hamiltonian_nnB(S, D, spin_index);
+    e += hamiltonian_nnB(S, D, spin_index, nn, s);
     
     return e;
 }
 
 
 // Initialize a random spin configuration, calculate its energy & magnetization
-void initialization()
+void initialization(lattice::NearestNeighbors& nn, SystemState& s)
 {
 	// set the random number generator seed
 	srand(rs);
@@ -341,35 +332,35 @@ void initialization()
 	    
 	    S = randomintpm();
 	    D = 0.05 * randomrealpm();
-	    SA_state[i] = S;
-	    DA_state[i] = D;
+	    s.SA[i] = S;
+	    s.DA[i] = D;
 	    
 	    S = randomintpm();
 	    D = 0.05 * randomrealpm();
-	    SB_state[i] = S;
-	    DB_state[i] = D;
+	    s.SB[i] = S;
+	    s.DB[i] = D;
 	    	    
-        nnAB1[i] = index(cx(i), cy(i), cz(i));
-        nnAB2[i] = index((cx(i) + xysize - 1) % xysize, cy(i), cz(i));
-        nnAB3[i] = index((cx(i) + xysize - 1 + cy(i) % 2) % xysize, (cy(i) + xysize - 1) % xysize, cz(i));
-        nnAB4[i] = index(cx(i), cy(i), (cz(i) + 1) % oosize);
-        nnAB5[i] = index((cx(i) + xysize - 1) % xysize, cy(i), (cz(i) + 1) % oosize);
-        nnAB6[i] = index((cx(i) + xysize - 1 + cy(i) % 2) % xysize, (cy(i) + xysize - 1) % xysize, (cz(i) + 1) % oosize);
+        nn.AB1[i] = index(cx(i), cy(i), cz(i));
+        nn.AB2[i] = index((cx(i) + xysize - 1) % xysize, cy(i), cz(i));
+        nn.AB3[i] = index((cx(i) + xysize - 1 + cy(i) % 2) % xysize, (cy(i) + xysize - 1) % xysize, cz(i));
+        nn.AB4[i] = index(cx(i), cy(i), (cz(i) + 1) % oosize);
+        nn.AB5[i] = index((cx(i) + xysize - 1) % xysize, cy(i), (cz(i) + 1) % oosize);
+        nn.AB6[i] = index((cx(i) + xysize - 1 + cy(i) % 2) % xysize, (cy(i) + xysize - 1) % xysize, (cz(i) + 1) % oosize);
 
-		nnAA1[i] = index(cx(i), cy(i), (cz(i) + oosize - 1) % oosize);
-        nnAA2[i] = index(cx(i), cy(i), (cz(i) + 1) % oosize);
+		nn.AA1[i] = index(cx(i), cy(i), (cz(i) + oosize - 1) % oosize);
+        nn.AA2[i] = index(cx(i), cy(i), (cz(i) + 1) % oosize);
         
-        nnBA1[i] = index((cx(i) + cy(i) % 2) % xysize, (cy(i) + 1) % xysize, (cz(i) + oosize - 1) % oosize);
-        nnBA2[i] = index(cx(i), cy(i), (cz(i) + oosize - 1) % oosize);
-        nnBA3[i] = index((cx(i) + 1) % xysize, cy(i), (cz(i) + oosize - 1) % oosize);
-        nnBA4[i] = index((cx(i) + cy(i) % 2) % xysize, (cy(i) + 1) % xysize, cz(i));
-        nnBA5[i] = index(cx(i), cy(i), cz(i));
-        nnBA6[i] = index((cx(i) + 1) % xysize, cy(i), cz(i));
+        nn.BA1[i] = index((cx(i) + cy(i) % 2) % xysize, (cy(i) + 1) % xysize, (cz(i) + oosize - 1) % oosize);
+        nn.BA2[i] = index(cx(i), cy(i), (cz(i) + oosize - 1) % oosize);
+        nn.BA3[i] = index((cx(i) + 1) % xysize, cy(i), (cz(i) + oosize - 1) % oosize);
+        nn.BA4[i] = index((cx(i) + cy(i) % 2) % xysize, (cy(i) + 1) % xysize, cz(i));
+        nn.BA5[i] = index(cx(i), cy(i), cz(i));
+        nn.BA6[i] = index((cx(i) + 1) % xysize, cy(i), cz(i));
 
-		nnBB1[i] = index(cx(i), cy(i), (cz(i) + oosize - 1) % oosize);
-        nnBB2[i] = index(cx(i), cy(i), (cz(i) + 1) % oosize);
+		nn.BB1[i] = index(cx(i), cy(i), (cz(i) + oosize - 1) % oosize);
+        nn.BB2[i] = index(cx(i), cy(i), (cz(i) + 1) % oosize);
 
-        sweeporder[i] = i;
+        nn.sweeporder[i] = i;
 	    
 	}
 
@@ -377,54 +368,54 @@ void initialization()
 	// Evaluate the Energy and Magnetization of the initial state
 	for (int i = 0; i < N; i++)
 	{
-	    double SA = SA_state[i];
-	    double SB = SB_state[i];
+	    double SA = s.SA[i];
+	    double SB = s.SB[i];
 	    
-	    double nDA = DA_state[i];
-	    double nDB = DB_state[i];
+	    double nDA = s.DA[i];
+	    double nDB = s.DB[i];
 	        	    
-	    E += hamiltonian_nnA(SA, nDA, i)/ 2 + hamiltonian_onsite(SA, nDA, i);
+	    s.E += hamiltonian_nnA(SA, nDA, i, nn, s)/ 2 + hamiltonian_onsite(SA, nDA, i);
 	    
-	    E += hamiltonian_nnB(SB, nDB, i)/ 2 + hamiltonian_onsite(SB, nDB, i);
+	    s.E += hamiltonian_nnB(SB, nDB, i, nn, s)/ 2 + hamiltonian_onsite(SB, nDB, i);
 	    
-	    MA += SA;
-	    MB += SB;
+	    s.MA += SA;
+	    s.MB += SB;
 	    
 	    if (cz(i) % 2 == 0)
 	    {
-	    	sMA += SA;
-	    	sMB += SB;
+	    	s.sMA += SA;
+	    	s.sMB += SB;
 	    }
 	    else
 	    {
-	    	sMA -= SA;
-	    	sMB -= SB;
+	    	s.sMA -= SA;
+	    	s.sMB -= SB;
 	    }
 	    
-	    Lnem += SA * SB;
-	    Ldel += nDA - nDB;
+	    s.Lnem += SA * SB;
+	    s.Ldel += nDA - nDB;
 	    
 	}
 	
 	// All quantities are per spin
 	
-	E /= N;
-	MA /= N;
-	MB /= N;
-	sMA /= N;
-	sMB /= N;
-	Lnem /= N;
-	Ldel /= N;
+	s.E /= N;
+	s.MA /= N;
+	s.MB /= N;
+	s.sMA /= N;
+	s.sMB /= N;
+	s.Lnem /= N;
+	s.Ldel /= N;
 	
-        cout << "Energy before ordering : " << E << endl;
+        cout << "Energy before ordering : " << s.E << endl;
 }
 
 
 // Initialize a random spin configuration, calculate its energy & magnetization
-void order()
+void order(const lattice::NearestNeighbors& nn, SystemState& s)
 {
-    cout << "Energy before ordering : " << E << endl;
-    cout << "Distortion before ordering : " << Ldel << endl;
+    cout << "Energy before ordering : " << s.E << endl;
+    cout << "Distortion before ordering : " << s.Ldel << endl;
 
     // Generate an initial spin configuration
         // Evaluate for each site the neighboring site indices
@@ -433,75 +424,75 @@ void order()
         {
             if (cz(i) % 2 == 0)
             {
-                SA_state[i] = 1.0;
-                SB_state[i] = 1.0;
-                DA_state[i] = 0.01;
-                DB_state[i] = -0.01;
+                s.SA[i] = 1.0;
+                s.SB[i] = 1.0;
+                s.DA[i] = 0.01;
+                s.DB[i] = -0.01;
             }
             else
             {
-                SA_state[i] = -1.0;
-                SB_state[i] = -1.0;
-                DA_state[i] = 0.01;
-                DB_state[i] = -0.01;
+                s.SA[i] = -1.0;
+                s.SB[i] = -1.0;
+                s.DA[i] = 0.01;
+                s.DB[i] = -0.01;
             }
 
         }
 
 
-        E = 0.0;
-        MA = 0.0;
-        MB = 0.0;
-        sMA = 0.0;
-        sMB = 0.0;
-        Lnem = 0.0;
-        Ldel = 0.0;
+        s.E = 0.0;
+        s.MA = 0.0;
+        s.MB = 0.0;
+        s.sMA = 0.0;
+        s.sMB = 0.0;
+        s.Lnem = 0.0;
+        s.Ldel = 0.0;
 
 
         // Evaluate the Energy and Magnetization of the ordered state
         for (int i = 0; i < N; i++)
         {
-            double SA = SA_state[i];
-            double SB = SB_state[i];
+            double SA = s.SA[i];
+            double SB = s.SB[i];
 
-            double nDA = DA_state[i];
-            double nDB = DB_state[i];
+            double nDA = s.DA[i];
+            double nDB = s.DB[i];
 
-            E += hamiltonian_nnA(SA, nDA, i)/ 2 + hamiltonian_onsite(SA, nDA, i);
+            s.E += hamiltonian_nnA(SA, nDA, i, nn, s)/ 2 + hamiltonian_onsite(SA, nDA, i);
 
-            E += hamiltonian_nnB(SB, nDB, i)/ 2 + hamiltonian_onsite(SB, nDB, i);
+            s.E += hamiltonian_nnB(SB, nDB, i, nn, s)/ 2 + hamiltonian_onsite(SB, nDB, i);
 
-            MA += SA;
-            MB += SB;
+            s.MA += SA;
+            s.MB += SB;
 
             if (cz(i) % 2 == 0)
             {
-                sMA += SA;
-                sMB += SB;
+                s.sMA += SA;
+                s.sMB += SB;
             }
             else
             {
-                sMA -= SA;
-                sMB -= SB;
+                s.sMA -= SA;
+                s.sMB -= SB;
             }
 
-            Lnem += SA * SB;
-            Ldel += nDA - nDB;
+            s.Lnem += SA * SB;
+            s.Ldel += nDA - nDB;
 
         }
 
         // All quantities are per spin
 
-        E /= N;
-        MA /= N;
-        MB /= N;
-        sMA /= N;
-        sMB /= N;
-        Lnem /= N;
-        Ldel /= N;
+        s.E /= N;
+        s.MA /= N;
+        s.MB /= N;
+        s.sMA /= N;
+        s.sMB /= N;
+        s.Lnem /= N;
+        s.Ldel /= N;
 
-        cout << "Energy after ordering : " << E << endl;
-        cout << "Distortion after ordering : " << Ldel << endl;
+        cout << "Energy after ordering : " << s.E << endl;
+        cout << "Distortion after ordering : " << s.Ldel << endl;
 }
 
 
@@ -573,7 +564,7 @@ void init_printLDC()
         outfile.close();
 }
 
-void printLSC()
+void printLSC(const SystemState& s)
 {
         ofstream outfile;
         string fn = filenameLSC();
@@ -581,19 +572,19 @@ void printLSC()
         outfile.open(fn,ios_base::app);
         for (int i = 0; i < N; i++)
         {
-                outfile << to_string(SA_state[i]) << "\n";
+                outfile << to_string(s.SA[i]) << "\n";
         }
 
         outfile << "\n";
 
         for (int i = 0; i < N; i++)
         {
-                outfile << to_string(SB_state[i]) << "\n";
+                outfile << to_string(s.SB[i]) << "\n";
         }
         outfile.close();
 }
 
-void printLDC()
+void printLDC(const SystemState& s)
 {
         ofstream outfile;
         string fn = filenameLDC();
@@ -601,14 +592,14 @@ void printLDC()
         outfile.open(fn,ios_base::app);
         for (int i = 0; i < N; i++)
         {
-                outfile << to_string(DA_state[i]) << "\n";
+                outfile << to_string(s.DA[i]) << "\n";
         }
 
         outfile << "\n";
 
         for (int i = 0; i < N; i++)
         {
-                outfile << to_string(DB_state[i]) << "\n";
+                outfile << to_string(s.DB[i]) << "\n";
         }
         outfile.close();
 }
@@ -643,107 +634,107 @@ void printLDC()
 
 // All necessary functions to generate one pass:
 // Generate a random sweep order to visit the spins
-void generate_new_sweep_order()
+void generate_new_sweep_order(lattice::NearestNeighbors& nn)
 {
 	// Shuffle the sweep order
 	for (int i = 0; i < N; i++)
 	{
-	    int mem = sweeporder[i];
+	    int mem = nn.sweeporder[i];
 	    int newi = random() % N;
 	    
-	    sweeporder[i] = sweeporder[newi];
-	    sweeporder[newi] = mem;
+	    nn.sweeporder[i] = nn.sweeporder[newi];
+	    nn.sweeporder[newi] = mem;
 	}
 }
 
 
 // define one spin flip (Metropolis-Hastings step)
 // This step also accounts for possible phase space reduction
-void oneflipA(int i)
+void oneflipA(int i, const lattice::NearestNeighbors& nn, SystemState& s)
 {
-	double SA = SA_state[i];
-	double oDA = DA_state[i];
+	double SA = s.SA[i];
+	double oDA = s.DA[i];
 	
 	double newSA = randomintpm();
 	//rw- 0.01
 	double newDA = oDA + 0.01 * randomrealpm();
 		
-	double delta_E = hamiltonianA(newSA, newDA, i) - hamiltonianA(SA, oDA, i);
+	double delta_E = hamiltonianA(newSA, newDA, i, nn, s) - hamiltonianA(SA, oDA, i, nn, s);
 	
 	if ((delta_E < 0) || (randomreal() < exp(- delta_E / T)))
 	{
 		new_acceptance_rate +=1;
 		
-        SA_state[i] = newSA;
-        DA_state[i] = newDA;
+        s.SA[i] = newSA;
+        s.DA[i] = newDA;
         
-        E += delta_E / N;
-        MA += (newSA - SA) / N;
+        s.E += delta_E / N;
+        s.MA += (newSA - SA) / N;
         
-        if (cz(i) % 2 == 0) {sMA += (newSA - SA) / N;}
-	    else {sMA -= (newSA - SA) / N;}
+        if (cz(i) % 2 == 0) {s.sMA += (newSA - SA) / N;}
+	    else {s.sMA -= (newSA - SA) / N;}
         
-        Lnem += (newSA - SA) * SB_state[i] / N;
-		Ldel += (newDA - oDA) / N;
+        s.Lnem += (newSA - SA) * s.SB[i] / N;
+        s.Ldel += (newDA - oDA) / N;
 		
     } 
 }
 
-void oneflipB(int i)
+void oneflipB(int i, const lattice::NearestNeighbors& nn, SystemState& s)
 {
-	double SB = SB_state[i];
-	double oDB = DB_state[i];
+	double SB = s.SB[i];
+	double oDB = s.DB[i];
 	
 	double newSB = randomintpm();
 	//rw- 0.01
 	double newDB = oDB + 0.01 * randomrealpm();
 		
-	double delta_E = hamiltonianB(newSB, newDB, i) - hamiltonianB(SB, oDB, i);
+	double delta_E = hamiltonianB(newSB, newDB, i, nn, s) - hamiltonianB(SB, oDB, i, nn, s);
 	
 	if ((delta_E < 0) || (randomreal() < exp(- delta_E / T)))
 	{
 		new_acceptance_rate +=1;
 		
-        SB_state[i] = newSB;
-        DB_state[i] = newDB;
+        s.SB[i] = newSB;
+        s.DB[i] = newDB;
         
-        E += delta_E / N;
-        MB += (newSB - SB) / N;
+        s.E += delta_E / N;
+        s.MB += (newSB - SB) / N;
         
-        if (cz(i) % 2 == 0) {sMB += (newSB - SB) / N;}
-	    else {sMB -= (newSB - SB) / N;}
+        if (cz(i) % 2 == 0) {s.sMB += (newSB - SB) / N;}
+	    else {s.sMB -= (newSB - SB) / N;}
         
-        Lnem += (newSB - SB) * SA_state[i] / N;
-		Ldel -= (newDB - oDB) / N;
+        s.Lnem += (newSB - SB) * s.SA[i] / N;
+		s.Ldel -= (newDB - oDB) / N;
     } 
 }
 
-void oneflip(int i)
+void oneflip(int i, const lattice::NearestNeighbors& nn, SystemState& s)
 {
-	oneflipA(i);
-	oneflipB(N - 1 - i);
+	oneflipA(i, nn, s);
+	oneflipB(N - 1 - i, nn, s);
 }
 
 
 
 // Defines a full pass of spin flips
 // This function evaluates the new acceptance rate and adjusts  the opening angle if necessary
-void onepass()
+void onepass(lattice::NearestNeighbors& nn, SystemState& s)
 {
-	generate_new_sweep_order();
+	generate_new_sweep_order(nn);
 	
 	new_acceptance_rate = 0.0;
 	
 	for (int i = 0; i < N; i++)
 	{
-        oneflip(sweeporder[i]);
+        oneflip(nn.sweeporder[i],nn, s);
     }
     
     new_acceptance_rate = new_acceptance_rate / 2 / N;
 }
 
 
-void compute()
+void compute(lattice::NearestNeighbors& nn, SystemState& s)
 {
 	// roughly half of the passes should be added as prepasses
 	int prepasses = (int) passes / 2;
@@ -759,7 +750,7 @@ void compute()
 	pass = 0;
 	for (int i = 0; i < prepasses; i++)
 	{
-		onepass();
+		onepass(nn,s);
 		pass += 1;
 		
 	}
@@ -785,28 +776,28 @@ void compute()
 		
 		for (int j = 0; j < subpasses; j++)
 		{
-			onepass();
-			e += E;
-			e2 += E * E;
+			onepass(nn,s);
+			e += s.E;
+			e2 += s.E * s.E;
 
-			ma += MA;
-			mb += MB;
+			ma += s.MA;
+			mb += s.MB;
 			
-			ma2 += MA * MA;
-			mb2 += MB * MB;
+			ma2 += s.MA * s.MA;
+			mb2 += s.MB * s.MB;
 			
-			sma += sMA;
-			smb += sMB;
+			sma += s.sMA;
+			smb += s.sMB;
 			
-			sma2 += sMA * sMA;
-			smb2 += sMB * sMB;
+			sma2 += s.sMA * s.sMA;
+			smb2 += s.sMB * s.sMB;
 			
 			
-			lnem += Lnem;
-			ldel += Ldel;
+			lnem += s.Lnem;
+			ldel += s.Ldel;
 			
-			lnem2 += Lnem * Lnem;
-			ldel2 += Ldel * Ldel;
+			lnem2 += s.Lnem * s.Lnem;
+			ldel2 += s.Ldel * s.Ldel;
 			
 			pass += 1;
 		}
@@ -841,14 +832,12 @@ void compute()
         if (printLastConf_Q.compare("True") == 0)
 	{
                 init_printLSC();
-                printLSC();
+                printLSC(s);
                 init_printLDC();
-                printLDC();
+                printLDC(s);
 	}
 
 }
-
-
 
 int main(int argc, char** argv)
 //-------
@@ -858,12 +847,15 @@ int main(int argc, char** argv)
     cout << "Starting the simulation with the parameters" <<  endl;
     cout << "T = " << T << "   Hz = " << Hz << "   Jab = " << Jab << "   Jcc = " << Jcc << endl;
 	time_t t0 = time(nullptr);
+
+        lattice::NearestNeighbors nn(N);
+        SystemState s(N);
 	
-	initialization();
+	initialization(nn,s);
 
-        order();
+        order(nn, s);
 
-	compute();
+	compute(nn, s);
 	
 	time_t t = time(nullptr);
 	double dt = 1.0 * (t - t0);
