@@ -9,7 +9,7 @@ clean:
 
 # .o files depend on .cpp file of same name + includes
 %.o:: %.cpp $(INCLUDE)
-	$(CC) -c $< -o $@
+	$(CC) -c -g $< -o $@
 
 Y2-12-7: Y2-12-7.o lattice.o
-	g++ -std=c++11 $^ -o $@
+	g++ -std=c++11 $^ -o $@ 

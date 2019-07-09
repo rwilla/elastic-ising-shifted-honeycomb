@@ -31,32 +31,44 @@ double eps = 1000.0;						// in-plane anisotropy
 double epsover2 = eps / 2.0;				// in-plane anisotropy
 
 struct SystemState {
-        SystemState(int N);
+        SystemState(int M);
 
-        double E = 0.0;								// Energy per spin
+        double E;								// Energy per spin
 
-        double MA = 0.0;							// Magnetization of sublattice A
-        double MB = 0.0;							// Magnetization of sublattice B
+        double MA;							// Magnetization of sublattice A
+        double MB;							// Magnetization of sublattice B
 
-        double sMA = 0.0;							// Staggered Magnetization A
-        double sMB = 0.0;							// Staggered Magnetization B
+        double sMA;							// Staggered Magnetization A
+        double sMB;							// Staggered Magnetization B
 
-        double Lnem = 0.0;							// nematic order MA * MB
-        double Ldel = 0.0;							// DA - DB
+        double Lnem;							// nematic order MA * MB
+        double Ldel;							// DA - DB
 
         //double Cfunc [(int) xysize / 2];			// Correlation function <S(0)S(r)>
 
         std::vector<int> SA;							// Spin state S in sublattice A
         std::vector<int> SB;							// Spin state S in sublattice B
-        std::vector<int> DA;							// Distortion state in sublattice A
-        std::vector<int> DB;							// Distortion state in sublattice B
+        std::vector<float> DA;							// Distortion state in sublattice A
+        std::vector<float> DB;							// Distortion state in sublattice B
 };
 
-SystemState::SystemState(int N){
-        this->SA = std::vector<int>(N);
-        this->SB = std::vector<int>(N);
-        this->DA = std::vector<int>(N);
-        this->DB = std::vector<int>(N);
+SystemState::SystemState(int M){
+        this->SA = std::vector<int>(M);
+        this->SB = std::vector<int>(M);
+        this->DA = std::vector<float>(M);
+        this->DB = std::vector<float>(M);
+
+        this->E = 0.0;								// Energy per spin
+
+        this->MA = 0.0;							// Magnetization of sublattice A
+        this->MB = 0.0;							// Magnetization of sublattice B
+
+        this->sMA = 0.0;							// Staggered Magnetization A
+        this->sMB = 0.0;							// Staggered Magnetization B
+
+        this->Lnem = 0.0;							// nematic order MA * MB
+        this->Ldel = 0.0;							// DA - DB
+
 }
 
 
@@ -143,11 +155,6 @@ void parse_input(int argc, char** argv)
         }
     }
 }
-
-
-
-
-
 
 
 //Few useful functions to start with:
