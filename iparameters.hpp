@@ -9,7 +9,9 @@
 #define INITIALPARAMETERS_HPP
 
 
+#include <iostream>
 #include <string>
+#include <getopt.h>
 
 using namespace std;
 
@@ -22,6 +24,7 @@ struct InitialParameters  {
     
     InitialParameters();
     
+    void parse_input(int argc, char** argv);
     
     //system
     int Lx;				// in-plane size of the cube lattice

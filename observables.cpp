@@ -1,7 +1,8 @@
-#include <iostream>
 #include "observables.hpp"
 
 namespace observables{
+
+using namespace std;
 
 SystemState::SystemState(int N){
     //initialize structure elements
@@ -16,14 +17,16 @@ SystemState::SystemState(int N){
     this->Lnem = 0.0;						// nematic order SA * SB
     this->Ldel = 0.0;						// DA - DB
 
-	this->SA = std::vector<int>(N);
-    this->SB = std::vector<int>(N);
-    this->DA = std::vector<float>(N);
-    this->DB = std::vector<float>(N);
+    this->pass = 0;							// current pass
+	
+	this->SA = vector<int>(N);
+    this->SB = vector<int>(N);
+    this->DA = vector<float>(N);
+    this->DB = vector<float>(N);
 };
 	
 void SystemState::print_E(){
-		std::cout << this->E << std::endl;
+	cout << this->E << endl;
 };
 
 }

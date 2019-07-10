@@ -4,6 +4,7 @@ using namespace std;
 
 namespace iparameters {
 
+//constructor
 InitialParameters::InitialParameters(){
 	this->Lx = 10;				// in-plane size of the cube lattice
 	this->Ly = 10;				// in-plane size of the cube lattice
@@ -29,6 +30,86 @@ InitialParameters::InitialParameters(){
 	this->printLastConf_Q = "False";			// flag defining if the last configuration shall be printed
 
 	
-};
+}
+
+//Parses the input command line to redefine simulation parameters
+void InitialParameters::parse_input(int argc, char** argv)
+{
+	int c;
+	while (1)
+    {
+    	static struct option long_options[] =
+        {
+        	/* These options don’t set a flag. We distinguish them by their indices. */
+            {"T",   required_argument, NULL, 't'},
+            {"Hx",  required_argument, NULL, 'x'},
+            {"Hy",  required_argument, NULL, 'y'},
+            {"Hz",  required_argument, NULL, 'z'},
+            {"Jab",  required_argument, NULL, 'j'},
+            {"Jcc",  required_argument, NULL, 'm'},
+            {"passes",  required_argument, NULL, 'n'},
+            {"eps",  required_argument, NULL, 'e'},
+            //{"printCfunction",  required_argument, NULL, 'c'},
+            {"printSpinConfiguration",  required_argument, NULL, 's'},
+            {"rs",  required_argument, NULL, 'r'},
+            {NULL, 0, NULL, 0}
+        };
+    	/* getopt_long stores the option index here. */
+    	int option_index = 0;
+
+		c = getopt_long_only (argc, argv, "a:b:c:d:", long_options, NULL);
+
+		/* Detect the end of the options. */
+		if (c == -1)
+        	break;
+        	
+        string soptarg = optarg;
+        switch (c)
+        {
+        	case 0:
+                    cout << "error" << endl;	break;
+            case 't':
+                    this->T = stod(optarg);		break;
+            case 'x':
+                    this->Hx = stod(optarg); 		break;
+            case 'y':
+                    this->Hy = stod(optarg); 		break;
+            case 'z':
+                    this->Hz = stod(optarg); 		break;
+            case 'j':
+                    this->Jab = stod(optarg); 		break;
+            case 'm':
+                    this->Jcc = stod(optarg); 		break;
+            case 'n':
+                    this->passes = stoi(optarg); 	break;
+            case 'e':
+                    this->eps = stod(optarg); 		break;
+            /*
+            case 'c':
+                    if (soptarg.compare("True") == 0)
+                    {
+                            this->printC_Q = "True";
+                    } else {
+                            this->printC_Q = "False";
+                    }				break;
+            */
+            case 's':
+                    if (soptarg.compare("True") == 0)
+                    {
+                    this->printLastConf_Q = "True";
+                    }
+                    else
+                    {
+                    this->printLastConf_Q = "False";
+                    }							break;
+            case 'r':
+                    this->rs = stoi(optarg);	 	break;
+            case '?':
+                    /* getopt_long already printed an error message. */ break;
+        default:
+        abort ();
+        }
+    }
+}
 
 }

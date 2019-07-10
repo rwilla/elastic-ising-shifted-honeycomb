@@ -10,6 +10,8 @@
 #include <iostream>
 #include <vector>
 
+using namespace std;
+
 namespace observables {
 
 /*
@@ -34,11 +36,13 @@ struct SystemState {
 
     double Lnem;						// nematic order MA * MB
     double Ldel;						// DA - DB
+    
+    int pass;							// current pass
 
-    std::vector<int> SA;				// Spin state S in sublattice A
-    std::vector<int> SB;				// Spin state S in sublattice B
-    std::vector<float> DA;				// Distortion state in sublattice A
-    std::vector<float> DB;				// Distortion state in sublattice B
+    vector<int> SA;				// Spin state S in sublattice A
+    vector<int> SB;				// Spin state S in sublattice B
+    vector<float> DA;				// Distortion state in sublattice A
+    vector<float> DB;				// Distortion state in sublattice B
 };
 
 }
