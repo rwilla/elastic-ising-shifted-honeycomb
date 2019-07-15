@@ -1,9 +1,6 @@
 #include "iparameters.hpp"
-
 using namespace std;
-
 namespace iparameters {
-
 //constructor
 InitialParameters::InitialParameters(){
 	this->Lx = 10;				// in-plane size of the cube lattice
@@ -11,7 +8,6 @@ InitialParameters::InitialParameters(){
 	this->Lz = 100;				// oo-plane size of the cube lattice
 	this->N = Lx * Ly * Lz;		// Number of spins
 	this->rs = 0;				// random seed
-
 	this->T = 1.5; 				// Temperature
 	this->Hx = 0.0;				// Field strength along z
 	this->Hy = 0.0;				// Field strength along z
@@ -24,14 +20,11 @@ InitialParameters::InitialParameters(){
 	this->L = 0.0;				// in-plane anisotropy
 	
 	this->eps = 1000.0;						
-
 	this->passes = 1000;		// Default # of passes
 	this->printC_Q = "False";					// flag defining if the correlation function shall be printed
 	this->printLastConf_Q = "False";			// flag defining if the last configuration shall be printed
-
 	
 }
-
 //Parses the input command line to redefine simulation parameters
 void InitialParameters::parse_input(int argc, char** argv)
 {
@@ -56,9 +49,7 @@ void InitialParameters::parse_input(int argc, char** argv)
         };
     	/* getopt_long stores the option index here. */
     	int option_index = 0;
-
 		c = getopt_long_only (argc, argv, "a:b:c:d:", long_options, NULL);
-
 		/* Detect the end of the options. */
 		if (c == -1)
         	break;
@@ -67,15 +58,15 @@ void InitialParameters::parse_input(int argc, char** argv)
         switch (c)
         {
         	case 0:
-                    cout << "error" << endl;	break;
-            case 't':
-                    this->T = stod(optarg);		break;
-            case 'x':
-                    this->Hx = stod(optarg); 		break;
-            case 'y':
-                    this->Hy = stod(optarg); 		break;
-            case 'z':
-                    this->Hz = stod(optarg); 		break;
+					cout << "error" << endl;		break;
+			case 't':
+					this->T = stod(optarg);			break;
+			case 'x':
+					this->Hx = stod(optarg); 		break;
+			case 'y':
+					this->Hy = stod(optarg); 		break;
+			case 'z':
+					this->Hz = stod(optarg); 		break;
             case 'j':
                     this->Jab = stod(optarg); 		break;
             case 'm':
@@ -84,15 +75,6 @@ void InitialParameters::parse_input(int argc, char** argv)
                     this->passes = stoi(optarg); 	break;
             case 'e':
                     this->eps = stod(optarg); 		break;
-            /*
-            case 'c':
-                    if (soptarg.compare("True") == 0)
-                    {
-                            this->printC_Q = "True";
-                    } else {
-                            this->printC_Q = "False";
-                    }				break;
-            */
             case 's':
                     if (soptarg.compare("True") == 0)
                     {
@@ -101,7 +83,7 @@ void InitialParameters::parse_input(int argc, char** argv)
                     else
                     {
                     this->printLastConf_Q = "False";
-                    }							break;
+                    }								break;
             case 'r':
                     this->rs = stoi(optarg);	 	break;
             case '?':
@@ -110,6 +92,17 @@ void InitialParameters::parse_input(int argc, char** argv)
         abort ();
         }
     }
+}
+// prints the basic filename (without extension)
+string InitialParameters::base_filename(){
+    string fn = "Y2-12-7_T=" + to_string(this->T).substr(0,6) + \
+    			"_Hz=" + to_string(this->Hz).substr(0,6) + \
+    			"_passes=" + to_string(this->passes) + \
+    			"_Jab=" + to_string(this->Jab).substr(0,4) + \
+    			"_Jcc=" + to_string(this->Jcc).substr(0,4) + \
+    			"_eps=" + to_string(this->eps).substr(0,4) + \
+    			"_rs=" + to_string(this->rs);
+	return fn;
 }
 
 }

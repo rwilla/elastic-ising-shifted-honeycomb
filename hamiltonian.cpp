@@ -1,13 +1,9 @@
 #include "hamiltonian.hpp"
-
 using namespace std;
-
 namespace hamiltonian {
-
 
 //EISH = elastic ising shifted honeycomb
 namespace EISH {
-
 // onsite
 double onsite(const iparameters::InitialParameters& ip, double S, double D, int spin_index)
 {
@@ -15,15 +11,13 @@ double onsite(const iparameters::InitialParameters& ip, double S, double D, int 
     
     //displacement energy
     e += ip.eps / 2 * D * D;
-
     //field-dependence
     e -= ip.Hz * S;
     
     return e;
 }
-
 //Full hamiltonian for a spin on sublattice A
-double siteA(const iparameters::InitialParameters& ip, double S, double D, int spin_index, const lattice::NearestNeighbors& nn, observables::SystemState& s)
+double siteA(const iparameters::InitialParameters& ip, double S, double D, int spin_index, const lattice::EISH::NearestNeighbors& nn, observables::EISH::SystemState& s)
 {
     double e = 0.0;
     e += hamiltonian::EISH::onsite(ip, S, D, spin_index);
@@ -31,9 +25,8 @@ double siteA(const iparameters::InitialParameters& ip, double S, double D, int s
     
     return e;
 }
-
 //Full hamiltonian for a spin on sublattice B
-double siteB(const iparameters::InitialParameters& ip, double S, double D, int spin_index, const lattice::NearestNeighbors& nn, observables::SystemState& s)
+double siteB(const iparameters::InitialParameters& ip, double S, double D, int spin_index, const lattice::EISH::NearestNeighbors& nn, observables::EISH::SystemState& s)
 {
     double e = 0.0;
     e += hamiltonian::EISH::onsite(ip, S, D, spin_index);
@@ -41,10 +34,8 @@ double siteB(const iparameters::InitialParameters& ip, double S, double D, int s
     
     return e;
 }
-
-
 //Nearest neighbor interaction for a spin on sublattice A
-double nnA(const iparameters::InitialParameters& ip, double S, double D, int spin_index, const lattice::NearestNeighbors& nn, observables::SystemState& s)
+double nnA(const iparameters::InitialParameters& ip, double S, double D, int spin_index, const lattice::EISH::NearestNeighbors& nn, observables::EISH::SystemState& s)
 {
     double e = 0.0;
         
@@ -83,7 +74,6 @@ double nnA(const iparameters::InitialParameters& ip, double S, double D, int spi
     
     double nSA;
     double nDA;
-
     nSA = s.SA[nn.AA1[spin_index]];
     nDA = s.DA[nn.AA1[spin_index]];
     
@@ -97,9 +87,8 @@ double nnA(const iparameters::InitialParameters& ip, double S, double D, int spi
     return e;
 }
 
-
 //Nearest neighbor interaction for a spin on sublattice B
-double nnB(const iparameters::InitialParameters& ip, double S, double D, int spin_index, const lattice::NearestNeighbors& nn, observables::SystemState& s)
+double nnB(const iparameters::InitialParameters& ip, double S, double D, int spin_index, const lattice::EISH::NearestNeighbors& nn, observables::EISH::SystemState& s)
 {
     double e = 0.0;
         
@@ -138,7 +127,6 @@ double nnB(const iparameters::InitialParameters& ip, double S, double D, int spi
     
     double nSB;
     double nDB;
-
     nSB = s.SB[nn.BB1[spin_index]];
     nDB = s.DB[nn.BB1[spin_index]];
     
@@ -151,7 +139,5 @@ double nnB(const iparameters::InitialParameters& ip, double S, double D, int spi
     
     return e;
 }
-
 }
-
 }
