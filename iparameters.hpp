@@ -51,6 +51,7 @@ struct InitialParameters  {
 	
 	//simulation paramters
 	int passes;					// Default # of passes
+	string order_Q;				// flag defining the system should be initially ordered
 	string printC_Q;			// flag defining if the correlation function shall be printed
 	string printLastConf_Q;		// flag defining if the last configuration shall be printed
 	

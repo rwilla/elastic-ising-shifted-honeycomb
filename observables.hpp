@@ -49,8 +49,8 @@ namespace EISH {
 	
 	    vector<int> SA;				// Spin state S in sublattice A
 	    vector<int> SB;				// Spin state S in sublattice B
-	    vector<float> DA;				// Distortion state in sublattice A
-	    vector<float> DB;				// Distortion state in sublattice B
+	    vector<double> DA;				// Distortion state in sublattice A
+	    vector<double> DB;				// Distortion state in sublattice B
 	};
 }
 }

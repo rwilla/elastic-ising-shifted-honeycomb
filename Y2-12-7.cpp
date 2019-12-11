@@ -17,15 +17,18 @@ using namespace std;
 //Define global parameters
 
 const double pi = M_PI;
-double new_acceptance_rate = 0;
+double new_acceptance_rate = 0.0;
 
 //Few useful functions to start with:
 // random real between 0 and 1
 double randomreal() {return (double) rand() / RAND_MAX;}
+
 // random number between -1 and 1
 double randomrealpm() {return ((double) 2.0 * randomreal() - 1.0);}
+
 // random integer which assumes either -1 or 1
 double randomintpm(){ return (double) 2.0 * round(randomreal()) - 1.0;}
+
 // get vector index from 3d array (i,j,k) \elem [0,Lx-1] * [0,Ly-1] * [0,Lz-1]  ->  l \elem [0, Lx * Ly * Lz - 1] ...
 int index(const iparameters::InitialParameters& ip, int i, int j, int k) {return i + j * ip.Lx + k * ip.Lx * ip.Ly;}
 // ... and back
@@ -89,7 +92,7 @@ void initialization(const iparameters::InitialParameters& ip, lattice::EISH::Nea
 	    
 	    s.sysE += hamiltonian::EISH::nnA(ip, SA, DA, i, nn, s)/ 2 + hamiltonian::EISH::onsite(ip, SA, DA, i);
 	    s.sysE += hamiltonian::EISH::nnB(ip, SB, DB, i, nn, s)/ 2 + hamiltonian::EISH::onsite(ip, SB, DB, i);
-	    
+
 	    s.sysM += SA + SB;
 	    s.sysMA += SA;
 	    s.sysMB += SB;
@@ -128,10 +131,10 @@ void initialization(const iparameters::InitialParameters& ip, lattice::EISH::Nea
 	// All quantities are per spin
 	s.div_sys_vars(ip.N);
 	
-	cout << "Energy ordering : " << s.sysE << endl;
+        cout << "Energy before ordering : " << s.sysE << endl;
 }
 
-// Initialize a random spin configuration, calculate its energy & magnetization
+// Initialize an ordered spin configuration, calculate its energy & magnetization
 void order(const iparameters::InitialParameters& ip, const lattice::EISH::NearestNeighbors& nn, observables::EISH::SystemState& s)
 {
     // Generate an initial spin configuration
@@ -154,7 +157,10 @@ void order(const iparameters::InitialParameters& ip, const lattice::EISH::Neares
                 s.DB[i] = -0.01;
             }
         }
+
+
 		s.reset_sys_vars();
+
         // Evaluate the Energy and Magnetization of the ordered state
         for (int i = 0; i < ip.N; i++)
         {
@@ -165,7 +171,7 @@ void order(const iparameters::InitialParameters& ip, const lattice::EISH::Neares
             
 			s.sysE += hamiltonian::EISH::nnA(ip, SA, DA, i, nn, s)/ 2 + hamiltonian::EISH::onsite(ip, SA, DA, i);
 			s.sysE += hamiltonian::EISH::nnB(ip, SB, DB, i, nn, s)/ 2 + hamiltonian::EISH::onsite(ip, SB, DB, i);
-			
+
 			s.sysM += SA + SB;
 			s.sysMA += SA;
 			s.sysMB += SB;
@@ -254,10 +260,13 @@ void oneflipA(const iparameters::InitialParameters& ip, int i, const lattice::EI
 	double DB = s.DB[i];
 	
 	double newSA = randomintpm();
-	double newDA = oldDA * ( 1.0 + 3.0 * randomrealpm());
-	if (abs(newDA) > 0.5) {newDA /= 2 * abs(newDA); }
-	//double newDA = 0.5 * randomrealpm();
-	//double newDA = oldDA + 0.01 * randomrealpm();
+
+        // evaluate the maximum absolute displacement of the previous pass
+        // and use it as a reference for the next one
+        // double newDA = 1.01 * old_max_abs_displacement * randomrealpm();
+
+        double newDA = oldDA + 0.001 * randomrealpm();
+
 	double delta_E = hamiltonian::EISH::siteA(ip, newSA, newDA, i, nn, s) - hamiltonian::EISH::siteA(ip, oldSA, oldDA, i, nn, s);
 	
 	if ((delta_E < 0) || (randomreal() < exp(- delta_E / ip.T)))
@@ -292,7 +301,7 @@ void oneflipA(const iparameters::InitialParameters& ip, int i, const lattice::EI
 		s.sysMAMBDADB += (newSA * newDA - oldSA * oldDA) * SB * DB / ip.N;
         
         
-    } 
+    }
 }
 void oneflipB(const iparameters::InitialParameters& ip, int i, const lattice::EISH::NearestNeighbors& nn, observables::EISH::SystemState& s)
 {
@@ -302,11 +311,12 @@ void oneflipB(const iparameters::InitialParameters& ip, int i, const lattice::EI
 	double oldDB = s.DB[i];
 	
 	double newSB = randomintpm();
-	double newDB = oldDB * ( 1.0 + 3.0 * randomrealpm());
-	if (abs(newDB) > 0.5) {newDB /= 2 * abs(newDB); }
-	//double newDB = 0.5 * randomrealpm();
-	//double newDB = oldDB + 0.01 * randomrealpm();
-	double delta_E = hamiltonian::EISH::siteB(ip, newSB, newDB, i, nn, s) - hamiltonian::EISH::siteB(ip, oldSB, oldDB, i, nn, s);
+
+        //double newDB = 1.01 * old_max_abs_displacement * randomrealpm();
+
+        double newDB = oldDB + 0.001 * randomrealpm();
+
+        double delta_E = hamiltonian::EISH::siteB(ip, newSB, newDB, i, nn, s) - hamiltonian::EISH::siteB(ip, oldSB, oldDB, i, nn, s);
 	
 	if ((delta_E < 0) || (randomreal() < exp(- delta_E / ip.T)))
 	{
@@ -315,7 +325,7 @@ void oneflipB(const iparameters::InitialParameters& ip, int i, const lattice::EI
         s.SB[i] = newSB;
         s.DB[i] = newDB;
         
-		s.sysE += delta_E / ip.N;
+        s.sysE += delta_E / ip.N;
         s.sysM += (newSB - oldSB) / ip.N;
         s.sysMB += (newSB - oldSB) / ip.N;
         s.sysDB += (newDB - oldDB) / ip.N;
@@ -354,14 +364,14 @@ void onepass(const iparameters::InitialParameters& ip, lattice::EISH::NearestNei
 	generate_new_sweep_order(ip, nn);
 	
 	new_acceptance_rate = 0.0;
-	
+
 	for (int i = 0; i < ip.N; i++)
 	{
         oneflip(ip, nn.sweeporder[i],nn, s);
     }
     
     new_acceptance_rate = new_acceptance_rate / 2 / ip.N;
-    
+
     s.pass += 1;
 }
 
@@ -377,7 +387,6 @@ void compute(iparameters::InitialParameters& ip, lattice::EISH::NearestNeighbors
 	for (int i = 0; i < prepasses; i++)
 	{
 		onepass(ip, nn, s);
-		
 	}
 		
 	fileprint_init(ip.base_filename(), averages.header_output_string());
@@ -394,7 +403,7 @@ void compute(iparameters::InitialParameters& ip, lattice::EISH::NearestNeighbors
 		averages.div(subpasses);
 		
 		cout << "Current acceptance rate = " << new_acceptance_rate << endl;
-		
+
 		fileprint_appendline(ip.base_filename(), to_string(s.pass) + "\t" + to_string(ip.T) + "\t" + to_string(ip.Hz) + "\t" + averages.output_string());
 		
 	}
@@ -414,7 +423,7 @@ int main(int argc, char** argv)
 	runningaverage::EISH::RunningAverage averages;
 	
 	initialization(ip,nn,s);
-    order(ip, nn, s);
+    if (ip.order_Q == "True") {order(ip, nn, s);}
 	compute(ip, nn, s, averages);
 	
 	time_t t = time(nullptr);

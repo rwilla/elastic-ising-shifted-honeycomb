@@ -21,6 +21,7 @@ InitialParameters::InitialParameters(){
 	
 	this->eps = 1000.0;						
 	this->passes = 1000;		// Default # of passes
+	this->order_Q = "False";					// flag defining the system should be initially ordered
 	this->printC_Q = "False";					// flag defining if the correlation function shall be printed
 	this->printLastConf_Q = "False";			// flag defining if the last configuration shall be printed
 	
@@ -41,6 +42,7 @@ void InitialParameters::parse_input(int argc, char** argv)
             {"Jab",  required_argument, NULL, 'j'},
             {"Jcc",  required_argument, NULL, 'm'},
             {"passes",  required_argument, NULL, 'n'},
+            {"order",  required_argument, NULL, 'o'},
             {"eps",  required_argument, NULL, 'e'},
             //{"printCfunction",  required_argument, NULL, 'c'},
             {"printSpinConfiguration",  required_argument, NULL, 's'},
@@ -84,6 +86,16 @@ void InitialParameters::parse_input(int argc, char** argv)
                     {
                     this->printLastConf_Q = "False";
                     }								break;
+            case 'o':
+                    if (soptarg.compare("True") == 0)
+                    {
+                    this->order_Q = "True";
+                    }
+                    else
+                    {
+                    this->order_Q = "False";
+                    }								break;
+
             case 'r':
                     this->rs = stoi(optarg);	 	break;
             case '?':
@@ -101,6 +113,7 @@ string InitialParameters::base_filename(){
     			"_Jab=" + to_string(this->Jab).substr(0,4) + \
     			"_Jcc=" + to_string(this->Jcc).substr(0,4) + \
     			"_eps=" + to_string(this->eps).substr(0,4) + \
+    			"_order=" + this->order_Q + \
     			"_rs=" + to_string(this->rs);
 	return fn;
 }

@@ -31,8 +31,8 @@ namespace EISH {
 		
 		this->SA = vector<int>(N);
 	    this->SB = vector<int>(N);
-	    this->DA = vector<float>(N);
-	    this->DB = vector<float>(N);
+	    this->DA = vector<double>(N);
+	    this->DB = vector<double>(N);
 	}
 	
 	
